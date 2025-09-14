@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binbox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha2d-F56rO96E5s4K5+8V+5Hj7i/i/w/w/w=" crossorigin=""/>
+    <style>
+        :root, [data-theme="dark"] {
+            --bg-color: #1a202c;
+            --text-color: #e2e8f0;
+            --secondary-text-color: #9ca3af;
+            --glass-panel-bg: rgba(74, 85, 104, 0.4);
+            --input-bg: #4a5568;
+            --input-text: #e2e8f0;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f7fafc;
+            --text-color: #2d3748;
+            --secondary-text-color: #4a4a4a;
+            --glass-panel-bg: rgba(203, 213, 224, 0.4);
+            --input-bg: #cbd5e0;
+            --input-text: #2d3748;
+        }
+
+        [data-theme="blue"] {
+            --bg-color: #1e3a8a;
+            --text-color: #bfdbfe;
+            --secondary-text-color: #93c5fd;
+            --glass-panel-bg: rgba(59, 130, 246, 0.4);
+            --input-bg: #3b82f6;
+            --input-text: #bfdbfe;
+        }
+
+        [data-theme="green"] {
+            --bg-color: #064e3b;
+            --text-color: #d1fae5;
+            --secondary-text-color: #6ee7b7;
+            --glass-panel-bg: rgba(16, 185, 129, 0.4);
+            --input-bg: #10b981;
+            --input-text: #d1fae5;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            overflow: hidden;
+            background-color: var(--bg-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            height: 100vh;
+        }
+
+        @keyframes logo-bin-glow {
+            from {
+                text-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(255, 204, 0, 0.8);
+            }
+        }
+
+        @keyframes logo-box-glow {
+            from {
+                text-shadow: 0 0 5px rgba(0, 150, 0, 0.5);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(0, 150, 0, 0.8);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .animated-logo-bin {
+            animation: logo-bin-glow 1s ease-in-out infinite alternate;
+        }
+
+        .animated-logo-box {
+            animation: logo-box-glow 1s ease-in-out infinite alternate;
+        }
+
+        .glass-panel {
+            background-color: var(--glass-panel-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .ticker-container {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .ticker-text {
+            display: inline-block;
+            animation: ticker-scroll 60s linear infinite;
+        }
+
+        @keyframes ticker-scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .snackbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 9999px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            pointer-events: none;
+        }
+
+        .snackbar.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        
+        /* New Leaflet Map Styles */
+        #map {
+            border-radius: 1rem;
+            width: 100%;
+            height: 320px; /* Use a fixed height for the map container */
+            z-index: 1;
+        }
+
+        /* Input field styling */
+        input, select, textarea {
+            background-color: var(--input-bg);
+            color: var(--input-text);
+        }
+
+    </style>
+</head>
+<body class="font-sans">
+
+    <!-- Snackbar for notifications -->
+    <div id="snackbar" class="snackbar"></div>
+
+    <!-- Main Container - Now full screen -->
+    <div id="app-container" class="relative w-full h-full transition-all duration-500 ease-in-out overflow-hidden">
+        
+        <!-- Splash Screen -->
+        <div id="splash-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-900 transition-opacity duration-500 ease-in-out">
+            <div class="text-6xl font-extrabold tracking-widest leading-none">
+                <span class="text-yellow-400 animated-logo-bin">Bin</span><span class="text-green-500 animated-logo-box">box</span>
+            </div>
+            <div id="logo-outline" class="text-6xl font-extrabold tracking-widest leading-none absolute opacity-0 transition-opacity duration-500 delay-500">
+                <span class="text-black outline-text">Bin</span><span class="text-black outline-text">box</span>
+            </div>
+        </div>
+
+        <!-- App Pages -->
+        <div id="pages" class="absolute inset-0 transition-all duration-500 ease-in-out p-4 overflow-auto custom-scrollbar">
+
+            <!-- Global header with Bucks balance -->
+            <div class="flex items-center justify-between p-4 sticky top-0 bg-[var(--bg-color)] bg-opacity-50 backdrop-blur-sm z-30">
+                <h1 id="page-title" class="text-3xl font-semibold">Binbox</h1>
+                <div id="wallet-balance-container" class="flex items-center justify-center space-x-2 text-xl font-bold bg-yellow-400 text-gray-900 px-4 py-2 rounded-full cursor-pointer transition-all duration-300 transform hover:scale-105">
+                    <span id="wallet-balance">0</span>
+                    <span class="text-base">Bucks</span>
+                </div>
+            </div>
+
+            <!-- Profile Creation Screen -->
+            <div id="profile-screen" class="page opacity-0 hidden transition-opacity duration-500 flex flex-col items-center justify-center p-4">
+                <div class="glass-panel p-8 rounded-xl shadow-lg w-full max-w-sm text-center space-y-4">
+                    <h2 class="text-3xl font-semibold">Create Your Profile</h2>
+                    <p class="text-sm" style="color:var(--secondary-text-color)">Please enter your details to get started.</p>
+                    <input type="text" id="profile-name" placeholder="Your Name" required class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="email" id="profile-email" placeholder="Your Email" required class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button class="w-full bg-green-500 text-white p-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95" onclick="saveProfile()">Start Binning!</button>
+                </div>
+            </div>
+
+            <!-- Home Screen -->
+            <div id="home-screen" class="page opacity-0 hidden transition-opacity duration-500">
+                <div class="p-4 space-y-4">
+                    <p class="text-xl font-light text-center" style="color:var(--secondary-text-color)">Welcome back!</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                    <button class="glass-panel text-white p-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95" onclick="showPage('pickup-screen')">
+                        <div class="text-4xl">♻️</div>
+                        <div class="mt-4 text-xl font-semibold">Schedule Pickup</div>
+                    </button>
+                    <button class="glass-panel text-white p-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95" onclick="showPage('rewards-screen')">
+                        <div class="text-4xl">🎁</div>
+                        <div class="mt-4 text-xl font-semibold">Rewards</div>
+                    </button>
+                    <button class="glass-panel text-white p-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95" onclick="showPage('map-screen')">
+                        <div class="text-4xl">📍</div>
+                        <div class="mt-4 text-xl font-semibold">Find Vending Machines</div>
+                    </button>
+                    <button class="glass-panel text-white p-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95" onclick="showPage('settings-screen')">
+                        <div class="text-4xl">⚙️</div>
+                        <div class="mt-4 text-xl font-semibold">Settings</div>
+                    </button>
+                </div>
+
+                <!-- Points Optimization Assistant -->
+                <div id="assistant-tooltip" class="glass-panel p-4 rounded-xl shadow-lg mt-4 hidden">
+                    <p class="text-sm font-light opacity-80" style="color:var(--secondary-text-color)">
+                        <span class="font-bold">Binbox Assistant:</span>
+                        <span id="assistant-message"></span>
+                    </p>
+                </div>
+
+                <!-- Tips Ticker -->
+                <div class="absolute bottom-4 left-4 right-4 z-40">
+                    <div class="glass-panel p-4 rounded-xl overflow-hidden">
+                        <div id="tips-ticker" class="ticker-container">
+                            <div class="ticker-text"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Pickup Screen -->
+            <div id="pickup-screen" class="page opacity-0 hidden transition-opacity duration-500">
+                <div class="flex items-center p-4">
+                    <button class="text-xl font-bold mr-2" onclick="showPage('home-screen')">←</button>
+                    <h2 class="text-2xl font-semibold">Schedule Pickup</h2>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="glass-panel p-6 rounded-xl shadow-lg space-y-4">
+                        <label for="waste-type" class="block text-sm font-medium">Type of Waste</label>
+                        <select id="waste-type" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            <option value="">Select a type...</option>
+                            <option value="e-waste">E-waste</option>
+                            <option value="organic-waste">Organic waste</option>
+                            <option value="recyclable-waste">Recyclable waste</option>
+                            <option value="hazardous-waste">Hazardous waste</option>
+                        </select>
+                        
+                        <label for="location" class="block text-sm font-medium">Location</label>
+                        <input type="text" id="location" placeholder="GPS auto-detect or enter address" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        
+                        <label for="name" class="block text-sm font-medium">Your Name</label>
+                        <input type="text" id="name" placeholder="Your Name" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        
+                        <label for="instructions" class="block text-sm font-medium">Delivery Instructions (Optional)</label>
+                        <textarea id="instructions" placeholder="e.g., Leave it at the front door or with the concierge." class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        
+                        <button class="w-full bg-green-500 text-white p-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95" onclick="schedulePickup()">Schedule Pickup</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Delivery Status Screen -->
+            <div id="delivery-screen" class="page opacity-0 hidden transition-opacity duration-500 flex flex-col items-center justify-center text-center p-4">
+                <div class="flex items-center p-4">
+                    <button class="text-xl font-bold mr-2" onclick="showPage('home-screen')">←</button>
+                    <h2 class="text-2xl font-semibold">Pickup Status</h2>
+                </div>
+                <div class="flex-grow flex flex-col items-center justify-center">
+                    <div id="delivery-icon" class="text-6xl mb-4 animate-pulse">🚗</div>
+                    <h2 id="delivery-status" class="text-2xl font-semibold mb-2">Finding a driver...</h2>
+                    <p id="delivery-message" class="text-md font-light" style="color:var(--secondary-text-color)"></p>
+                </div>
+                <button id="delivery-back-btn" class="mt-8 bg-gray-500 text-white px-6 py-2 rounded-full font-semibold hidden" onclick="showPage('home-screen')">Done</button>
+            </div>
+
+            <!-- Rewards Screen -->
+            <div id="rewards-screen" class="page opacity-0 hidden transition-opacity duration-500">
+                <div class="flex items-center p-4">
+                    <button class="text-xl font-bold mr-2" onclick="showPage('home-screen')">←</button>
+                    <h2 class="text-2xl font-semibold">Rewards</h2>
+                </div>
+                <div class="p-4 grid grid-cols-2 sm:grid-cols-3 gap-4 custom-scrollbar">
+                    <!-- Reward Cards will be populated here by JS -->
+                </div>
+            </div>
+
+            <!-- Find Vending Machines Screen -->
+            <div id="map-screen" class="page opacity-0 hidden transition-opacity duration-500">
+                <div class="flex items-center p-4">
+                    <button class="text-xl font-bold mr-2" onclick="showPage('home-screen')">←</button>
+                    <h2 class="text-2xl font-semibold">Find Vending Machines</h2>
+                </div>
+                <div class="p-4">
+                    <div class="glass-panel p-4 rounded-xl shadow-lg relative overflow-hidden">
+                        <!-- Map container -->
+                        <div id="map" class="w-full h-80 block"></div>
+                        <div class="mt-4 flex space-x-2">
+                            <select id="state-selector" class="flex-1 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="showCityPins(this.value)">
+                                <option value="">Select a City/Region</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Bengaluru">Bengaluru</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                                <option value="Kerala">Kerala</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Screen -->
+            <div id="settings-screen" class="page opacity-0 hidden transition-opacity duration-500">
+                <div class="flex items-center p-4">
+                    <button class="text-xl font-bold mr-2" onclick="showPage('home-screen')">←</button>
+                    <h2 class="text-2xl font-semibold">Settings</h2>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="glass-panel p-6 rounded-xl shadow-lg space-y-4">
+                        <label class="block text-sm font-medium">Profile Info</label>
+                        <input type="text" placeholder="Name" class="w-full p-3 rounded-lg" id="settings-name">
+                        <input type="email" placeholder="Email" class="w-full p-3 rounded-lg" id="settings-email">
+                        
+                        <label class="block text-sm font-medium mt-4">Preferences</label>
+                        <label for="theme-selector" class="block text-sm font-medium">App Theme</label>
+                        <select id="theme-selector" onchange="applyTheme(this.value)" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                            <option value="blue">Blue</option>
+                            <option value="green">Green</option>
+                        </select>
+                        
+                        <div class="flex items-center justify-between mt-4">
+                            <span class="text-sm font-medium">VIP Status <span class="text-xs text-gray-400">(Demo)</span></span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="vip-toggle" class="sr-only peer" onchange="toggleVipStatus(this.checked)">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <span class="text-sm font-medium">Notifications</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" value="" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <button class="w-full bg-blue-500 text-white p-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95" onclick="saveSettings()">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div id="pickup-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black bg-opacity-50">
+        <div class="glass-panel w-full max-w-sm p-6 rounded-xl shadow-lg text-center">
+            <h3 class="text-xl font-semibold mb-4">Pickup Scheduled!</h3>
+            <p>Your pickup request has been received. A driver will be dispatched shortly.</p>
+            <button class="mt-4 bg-green-500 text-white px-6 py-2 rounded-full font-semibold" onclick="hideModal('pickup-modal')">Got it</button>
+        </div>
+    </div>
+
+    <div id="rewards-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black bg-opacity-50">
+        <div class="glass-panel w-full max-w-sm p-6 rounded-xl shadow-lg text-center">
+            <h3 class="text-xl font-semibold mb-4">Confirm Redemption</h3>
+            <p id="rewards-modal-text">Do you want to redeem this reward for <span id="reward-points"></span> Bucks?</p>
+            <div class="flex justify-around mt-6">
+                <button class="bg-gray-500 text-white px-6 py-2 rounded-full font-semibold" onclick="hideModal('rewards-modal')">Cancel</button>
+                <button class="bg-green-500 text-white px-6 py-2 rounded-full font-semibold" onclick="redeemReward()">Redeem</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black bg-opacity-50">
+        <div class="glass-panel w-full max-w-sm p-6 rounded-xl shadow-lg text-center">
+            <h3 class="text-xl font-semibold mb-4">Changes Saved!</h3>
+            <p>Your preferences have been updated.</p>
+            <button class="mt-4 bg-blue-500 text-white px-6 py-2 rounded-full font-semibold" onclick="hideModal('settings-modal')">OK</button>
+        </div>
+    </div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha2d-F56rO96E5s4K5+8V+5Hj7i/i/w/w/w=" crossorigin=""></script>
+<script>
+    // Constants for the app's state and logic
+    const MAX_POINTS = 25000;
+    const NORMAL_POINTS = 50;
+    const VIP_POINTS = 70;
+    const rewards = [
+        { name: 'Coffee Voucher', points: 60, icon: '☕' },
+        { name: 'Movie Ticket', points: 500, icon: '🎟️' },
+        { name: 'Grocery Discount', points: 1000, icon: '🛒' },
+        { name: 'Plant-a-Tree', points: 5000, icon: '🌳' },
+        { name: 'Eco-Bag', points: 150, icon: '🛍️' },
+        { name: 'Bike Service', points: 2500, icon: '🚲' },
+        { name: 'Water Bottle', points: 800, icon: '💧' },
+        { name: 'Yoga Class', points: 1200, icon: '🧘' },
+        { name: 'Reusable Straws', points: 200, icon: '🥤' },
+        { name: 'Compost Bin', points: 3000, icon: '🧺' },
+        { name: 'Book Store Credit', points: 750, icon: '📚' },
+        { name: 'Donate to Charity', points: 100, icon: '❤️' },
+        { name: 'Electric Scooter Pass', points: 1500, icon: '🛴' },
+        { name: 'Seed Packet', points: 50, icon: '🌱' },
+        { name: 'Headphones', points: 4500, icon: '🎧' },
+        { name: 'Wireless Speaker', points: 4000, icon: '🔊' },
+        { name: 'Smart Watch', points: 15000, icon: '⌚' },
+        { name: 'Laptop', points: 20000, icon: '💻' },
+        { name: 'Gaming Console', points: 25000, icon: '🎮' },
+        { name: 'Weekend Getaway', points: 10000, icon: '✈️' }
+    ];
+    const tips = [
+        "Did you know? Recycling one aluminum can saves enough energy to power a TV for three hours!",
+        "One more pickup will get you closer to your next reward!",
+        "Every piece of plastic you recycle helps protect our oceans and wildlife.",
+        "Your Bucks are adding up! Check out the Rewards section to see what you can redeem.",
+        "Composting organic waste reduces landfill methane, a potent greenhouse gas.",
+        "The best value for your Bucks is to redeem two 500-point rewards instead of one 1000-point reward.",
+        "Switching to LED bulbs can save up to 80% on your lighting bill.",
+        "You have enough Bucks to redeem a reward. Go for it!",
+        "You have 4,800 Bucks. Just one more pickup to unlock the 5,000-Buck reward."
+    ];
+    let walletBalance = 0;
+    let currentReward = null;
+    let isVIP = false;
+    let map = null;
+    let currentMarkers = [];
+
+    // DOM Elements
+    const splashScreen = document.getElementById('splash-screen');
+    const pages = document.querySelectorAll('.page');
+    const snackbar = document.getElementById('snackbar');
+    const walletBalanceEl = document.getElementById('wallet-balance');
+    const tipsTicker = document.querySelector('.ticker-text');
+    const rewardsGrid = document.querySelector('#rewards-screen .grid');
+    const assistantTooltip = document.getElementById('assistant-tooltip');
+    const body = document.body;
+    const vipToggle = document.getElementById('vip-toggle');
+    const deliveryScreen = document.getElementById('delivery-screen');
+    const deliveryStatus = document.getElementById('delivery-status');
+    const deliveryMessage = document.getElementById('delivery-message');
+    const deliveryIcon = document.getElementById('delivery-icon');
+    const deliveryBackBtn = document.getElementById('delivery-back-btn');
+    const inputFields = document.querySelectorAll('input, select, textarea');
+    
+    // Vending machine locations for major cities in India
+    const vendingMachines = {
+        'Mumbai': { center: [19.0760, 72.8777], locations: [] },
+        'Bengaluru': { center: [12.9716, 77.5946], locations: [] },
+        'Delhi': { center: [28.7041, 77.1025], locations: [] },
+        'Hyderabad': { center: [17.3850, 78.4867], locations: [] },
+        'Kerala': { center: [10.8505, 76.2711], locations: [] }
+    };
+    
+    // Generate 27 random locations for each city
+    function generateRandomLocations(cityName) {
+        const { center } = vendingMachines[cityName];
+        const locations = [];
+        for (let i = 1; i <= 27; i++) {
+            // Generate larger random offsets for a wider spread
+            const latOffset = (Math.random() - 0.5) * 1.0; // +/- 0.5 degrees
+            const lngOffset = (Math.random() - 0.5) * 1.0; // +/- 0.5 degrees
+            locations.push({
+                name: `${cityName} Vending Machine #${i}`,
+                lat: center[0] + latOffset,
+                lng: center[1] + lngOffset
+            });
+        }
+        vendingMachines[cityName].locations = locations;
+    }
+
+    // Initialize all locations
+    Object.keys(vendingMachines).forEach(city => generateRandomLocations(city));
+
+    // Function to show a specific page and hide others
+    function showPage(pageId) {
+        pages.forEach(page => {
+            page.classList.add('hidden', 'opacity-0');
+        });
+        const activePage = document.getElementById(pageId);
+        if (activePage) {
+            activePage.classList.remove('hidden');
+            setTimeout(() => {
+                activePage.classList.remove('opacity-0');
+                if (pageId === 'map-screen') {
+                    if (!map) {
+                        initLeafletMap();
+                    }
+                    // Automatically show pins for a default city on load
+                    const defaultCity = 'Mumbai';
+                    document.getElementById('state-selector').value = defaultCity;
+                    showCityPins(defaultCity);
+                }
+            }, 50); // Small delay to trigger transition
+        }
+        updateAssistant();
+    }
+
+    // Function to show a modal
+    function showModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    // Function to hide a modal
+    function hideModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // Function to display a snackbar message
+    function showSnackbar(message) {
+        snackbar.textContent = message;
+        snackbar.classList.add('show');
+        setTimeout(() => {
+            snackbar.classList.remove('show');
+        }, 3000);
+    }
+
+    // Function to update the wallet balance with animation
+    function updateWalletBalance(newPoints) {
+        let currentPoints = parseInt(walletBalanceEl.textContent);
+        if (currentPoints > newPoints) {
+            // Deduct points
+            const diff = currentPoints - newPoints;
+            let currentStep = 0;
+            const step = Math.ceil(diff / 20);
+            const timer = setInterval(() => {
+                currentStep += step;
+                if (currentStep >= diff) {
+                    walletBalanceEl.textContent = newPoints;
+                    clearInterval(timer);
+                } else {
+                    walletBalanceEl.textContent = Math.round(currentPoints - currentStep);
+                }
+            }, 20);
+        } else {
+            // Add points
+            const diff = newPoints - currentPoints;
+            let currentStep = 0;
+            const step = Math.ceil(diff / 20);
+            const timer = setInterval(() => {
+                currentStep += step;
+                if (currentStep >= diff) {
+                    walletBalanceEl.textContent = newPoints;
+                    clearInterval(timer);
+                } else {
+                    walletBalanceEl.textContent = Math.round(currentPoints + currentStep);
+                }
+            }, 20);
+        }
+    }
+
+    // Profile Creation Logic
+    function saveProfile() {
+        const name = document.getElementById('profile-name').value;
+        const email = document.getElementById('profile-email').value;
+
+        if (!name || !email) {
+            showSnackbar("Please fill in both name and email.");
+            return;
+        }
+
+        localStorage.setItem('profile', JSON.stringify({ name, email }));
+        document.getElementById('settings-name').value = name;
+        document.getElementById('settings-email').value = email;
+        showPage('home-screen');
+    }
+
+    // Schedule Pickup Logic
+    function schedulePickup() {
+        const wasteType = document.getElementById('waste-type').value;
+        const location = document.getElementById('location').value;
+        const name = document.getElementById('name').value;
+
+        if (!wasteType || !location || !name) {
+            showSnackbar("Please fill out all required fields.");
+            return;
+        }
+
+        showPage('delivery-screen');
+        
+        deliveryIcon.textContent = '🚗';
+        deliveryStatus.textContent = 'Finding a driver...';
+        deliveryMessage.textContent = 'Please wait, a driver will be assigned to you shortly.';
+        deliveryIcon.classList.remove('animate-pulse');
+        deliveryBackBtn.classList.add('hidden');
+
+        // Simulate delivery process
+        setTimeout(() => {
+            deliveryIcon.textContent = '🚚';
+            deliveryStatus.textContent = 'Driver on the way!';
+            deliveryMessage.textContent = 'Your pickup is in progress. The driver is en route to your location.';
+            deliveryIcon.classList.add('animate-pulse');
+        }, 2000);
+
+        setTimeout(() => {
+            deliveryIcon.textContent = '✅';
+            deliveryStatus.textContent = 'Pickup Complete!';
+            deliveryMessage.textContent = 'Your waste has been collected. You\'ve been awarded bucks!';
+            deliveryIcon.classList.remove('animate-pulse');
+            deliveryBackBtn.classList.remove('hidden');
+
+            const pointsAwarded = isVIP ? VIP_POINTS : NORMAL_POINTS;
+            walletBalance = Math.min(walletBalance + pointsAwarded, MAX_POINTS);
+            updateWalletBalance(walletBalance);
+            showSnackbar(`Pickup Complete! You received ${pointsAwarded} Bucks.`);
+        }, 6000);
+    }
+
+    // Rewards Logic
+    function populateRewards() {
+        rewardsGrid.innerHTML = ''; // Clear previous cards
+        rewards.forEach(reward => {
+            const card = document.createElement('div');
+            card.className = 'glass-panel p-4 rounded-xl shadow-lg cursor-pointer transition-transform duration-200 transform hover:scale-105 active:scale-95';
+            card.innerHTML = `
+                <div class="text-4xl text-center">${reward.icon}</div>
+                <div class="mt-2 text-center text-sm font-medium truncate">${reward.name}</div>
+                <div class="mt-2 text-center text-xs font-bold text-yellow-400">${reward.points} Bucks</div>
+            `;
+            card.onclick = () => {
+                if (walletBalance >= reward.points) {
+                    currentReward = reward;
+                    document.getElementById('reward-points').textContent = reward.points;
+                    showModal('rewards-modal');
+                } else {
+                    showSnackbar(`Not enough Bucks. You need ${reward.points - walletBalance} more Bucks.`);
+                }
+            };
+            rewardsGrid.appendChild(card);
+        });
+    }
+
+    function redeemReward() {
+        if (!currentReward) return;
+        walletBalance -= currentReward.points;
+        updateWalletBalance(walletBalance);
+        hideModal('rewards-modal');
+        const generatedCode = 'woops' + Math.floor(Math.random() * 9999);
+        showSnackbar(`Reward Redeemed! Code: ${generatedCode}`);
+        currentReward = null;
+    }
+    
+    // Points Optimization Assistant Logic
+    function updateAssistant() {
+        const assistantMessageEl = document.getElementById('assistant-message');
+        assistantTooltip.classList.add('hidden'); // Hide by default
+        
+        let message = '';
+        if (walletBalance >= 4800 && walletBalance < 5000) {
+            message = 'You are close to a big reward! One more pickup will get you to the 5,000-Buck reward.';
+        } else if (walletBalance >= 1000) {
+            const reward1000 = rewards.find(r => r.points === 1000);
+            const reward500 = rewards.find(r => r.points === 500);
+            if (reward1000 && reward500 && walletBalance >= reward1000.points) {
+                 message = 'Best value: Redeem two ' + reward500.points + '-Bucks rewards instead of one ' + reward1000.points + '-Buck reward for better value.';
+            } else {
+                message = "You've got enough Bucks to redeem a great reward. Check out your options!";
+            }
+        }
+
+        if (message) {
+            assistantMessageEl.textContent = message;
+            assistantTooltip.classList.remove('hidden');
+        }
+    }
+
+    // VIP Status Logic
+    function toggleVipStatus(isVipChecked) {
+        isVIP = isVipChecked;
+        localStorage.setItem('binbox-vip', isVIP);
+        showSnackbar(`VIP status is now: ${isVIP ? 'ON' : 'OFF'}`);
+    }
+
+    function saveSettings() {
+        const name = document.getElementById('settings-name').value;
+        const email = document.getElementById('settings-email').value;
+        if (name && email) {
+            localStorage.setItem('profile', JSON.stringify({ name, email }));
+        }
+        showModal('settings-modal');
+    }
+
+    // Theme Logic
+    function applyTheme(themeName) {
+        body.setAttribute('data-theme', themeName);
+        localStorage.setItem('selected-theme', themeName);
+    }
+
+    // Leaflet Map Functions
+    function initLeafletMap() {
+        // Set up the map with a default view for India
+        map = L.map('map').setView([20.5937, 78.9629], 5);
+        
+        // Add a tile layer from OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+    }
+
+    // Function to clear existing markers and add new ones for a city
+    function showCityPins(cityName) {
+        // Remove existing markers
+        currentMarkers.forEach(marker => map.removeLayer(marker));
+        currentMarkers = [];
+
+        if (cityName === "") {
+            // If nothing is selected, recenter on India and return
+            map.setView([20.5937, 78.9629], 5);
+            return;
+        }
+
+        const cityData = vendingMachines[cityName];
+        if (cityData) {
+            // Set the map view to the center of the selected city
+            map.setView(cityData.center, 9);
+
+            // Add new markers for the selected city
+            cityData.locations.forEach(location => {
+                const marker = L.marker([location.lat, location.lng]).addTo(map)
+                    .bindPopup(location.name);
+                currentMarkers.push(marker);
+            });
+            showSnackbar(`Displaying ${cityData.locations.length} machines in ${cityName}.`);
+        }
+    }
+
+    // Initialize the app on window load
+    window.onload = function() {
+        // Populate the tips ticker immediately
+        let tipsString = tips.join(" • ");
+        tipsTicker.textContent = tipsString + tipsString; // Duplicate for continuous loop
+
+        // Handle the splash screen animation, made faster
+        const logoBin = document.querySelector('.animated-logo-bin');
+        const logoBox = document.querySelector('.animated-logo-box');
+        const logoOutline = document.getElementById('logo-outline');
+        
+        logoBin.classList.remove('animated-logo-bin');
+        logoBox.classList.remove('animated-logo-box');
+        
+        setTimeout(() => {
+            logoBin.classList.add('animated-logo-bin');
+        }, 50);
+        setTimeout(() => {
+            logoBox.classList.add('animated-logo-box');
+        }, 300);
+        
+        setTimeout(() => {
+            logoOutline.classList.remove('opacity-0');
+            logoBin.classList.remove('animated-logo-bin');
+            logoBox.classList.remove('animated-logo-box');
+        }, 1000);
+
+        setTimeout(() => {
+            splashScreen.classList.add('opacity-0');
+            setTimeout(() => {
+                splashScreen.classList.add('hidden');
+                
+                // Check if profile exists in localStorage
+                const profile = localStorage.getItem('profile');
+                if (profile) {
+                    const { name, email } = JSON.parse(profile);
+                    document.getElementById('settings-name').value = name;
+                    document.getElementById('settings-email').value = email;
+                    showPage('home-screen');
+                } else {
+                    showPage('profile-screen');
+                }
+            }, 250);
+        }, 1500);
+        
+        // Populate the rewards grid
+        populateRewards();
+        
+        // Load VIP status from localStorage
+        isVIP = localStorage.getItem('binbox-vip') === 'true';
+        vipToggle.checked = isVIP;
+
+        // Update the assistant on app load
+        updateAssistant();
+        
+        // Apply saved theme or default
+        const savedTheme = localStorage.getItem('selected-theme') || 'dark';
+        document.getElementById('theme-selector').value = savedTheme;
+        applyTheme(savedTheme);
+    };
+</script>
+
+</body>
+</html>
