@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Binbox (DEMO)</title>
+    <title>Binbox (Demo)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -173,6 +173,12 @@
             background-color: var(--input-bg);
             color: var(--input-text);
         }
+        
+        @media (max-width: 640px) {
+            .logo-text {
+                font-size: 2.5rem;
+            }
+        }
 
     </style>
 </head>
@@ -187,7 +193,7 @@
         <!-- Splash Screen -->
         <div id="splash-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-900 transition-opacity duration-500 ease-in-out">
             <div class="text-6xl font-extrabold tracking-widest leading-none">
-                <span class="text-yellow-400 animated-logo-bin">Bin</span><span class="text-green-500 animated-logo-box">box</span>
+                <span class="text-yellow-400 animated-logo-bin">Bin</span><span class="text-green-500 animated-logo-box">box</span><span class="text-gray-400 text-2xl font-normal ml-2">(Demo)</span>
             </div>
             <div id="logo-outline" class="text-6xl font-extrabold tracking-widest leading-none absolute opacity-0 transition-opacity duration-500 delay-500">
                 <span class="text-black outline-text">Bin</span><span class="text-black outline-text">box</span>
@@ -199,7 +205,7 @@
 
             <!-- Global header with Bucks balance -->
             <div class="flex items-center justify-between p-4 sticky top-0 bg-[var(--bg-color)] bg-opacity-50 backdrop-blur-sm z-30">
-                <h1 id="page-title" class="text-3xl font-semibold">Binbox</h1>
+                <h1 id="page-title" class="text-3xl font-semibold">Binbox <span class="text-gray-400 font-light text-base">(Demo)</span></h1>
                 <div id="wallet-balance-container" class="flex items-center justify-center space-x-2 text-xl font-bold bg-yellow-400 text-gray-900 px-4 py-2 rounded-full cursor-pointer transition-all duration-300 transform hover:scale-105">
                     <span id="wallet-balance">0</span>
                     <span class="text-base">Bucks</span>
@@ -475,35 +481,170 @@
     const deliveryBackBtn = document.getElementById('delivery-back-btn');
     const inputFields = document.querySelectorAll('input, select, textarea');
     
-    // Vending machine locations for major cities in India
+    // Vending machine locations for major cities in India, now hardcoded to be on land
     const vendingMachines = {
-        'Mumbai': { center: [19.0760, 72.8777], locations: [] },
-        'Bengaluru': { center: [12.9716, 77.5946], locations: [] },
-        'Delhi': { center: [28.7041, 77.1025], locations: [] },
-        'Hyderabad': { center: [17.3850, 78.4867], locations: [] },
-        'Kerala': { center: [10.8505, 76.2711], locations: [] }
+        'Mumbai': { 
+            center: [19.0760, 72.8777], 
+            locations: [
+                { name: 'Chhatrapati Shivaji Maharaj Vastu Sangrahalaya', lat: 18.9255, lng: 72.8322 },
+                { name: 'Gateway of India', lat: 18.9216, lng: 72.8347 },
+                { name: 'Marine Drive', lat: 18.9320, lng: 72.8227 },
+                { name: 'Bandra Worli Sea Link', lat: 19.0347, lng: 72.8157 },
+                { name: 'Sanjay Gandhi National Park', lat: 19.2198, lng: 72.8687 },
+                { name: 'Juhu Beach', lat: 19.0882, lng: 72.8267 },
+                { name: 'Elephanta Caves', lat: 18.9634, lng: 72.9329 },
+                { name: 'Haji Ali Dargah', lat: 18.9839, lng: 72.8055 },
+                { name: 'Shree Siddhivinayak Ganapati Temple', lat: 19.0170, lng: 72.8290 },
+                { name: 'Film City', lat: 19.1673, lng: 72.8443 },
+                { name: 'Kanheri Caves', lat: 19.2274, lng: 72.9030 },
+                { name: 'Worli Fort', lat: 19.0119, lng: 72.8166 },
+                { name: 'Mahalaxmi Temple', lat: 18.9863, lng: 72.8055 },
+                { name: 'Powai Lake', lat: 19.1176, lng: 72.9123 },
+                { name: 'Nehru Science Centre', lat: 18.9959, lng: 72.8198 },
+                { name: 'Mahakali Caves', lat: 19.1215, lng: 72.8647 },
+                { name: 'Colaba Causeway Market', lat: 18.9171, lng: 72.8266 },
+                { name: 'Dharavi', lat: 19.0435, lng: 72.8559 },
+                { name: 'Veermata Jijabai Bhosale Udyan And Zoo', lat: 18.9832, lng: 72.8369 },
+                { name: 'Trek to Kalsubai Peak', lat: 19.3800, lng: 73.7431 },
+                { name: 'Global Vipassana Pagoda', lat: 19.2612, lng: 72.7933 },
+                { name: 'EsselWorld', lat: 19.2891, lng: 72.7936 },
+                { name: 'Imagicaa Theme Park', lat: 18.7303, lng: 73.3592 },
+                { name: 'Adlabs Aquamagica', lat: 18.7303, lng: 73.3592 },
+                { name: 'Tungareshwar National Park', lat: 19.4674, lng: 72.9159 },
+                { name: 'Khandala Lonavala', lat: 18.7523, lng: 73.3986 },
+                { name: 'Malshej Ghat', lat: 19.3090, lng: 73.7667 }
+            ] 
+        },
+        'Bengaluru': { 
+            center: [12.9716, 77.5946], 
+            locations: [
+                { name: 'Cubbon Park', lat: 12.9757, lng: 77.5912 },
+                { name: 'Lalbagh Botanical Garden', lat: 12.9515, lng: 77.5848 },
+                { name: 'Bangalore Palace', lat: 12.9988, lng: 77.5910 },
+                { name: 'Nandi Hills', lat: 13.3700, lng: 77.6830 },
+                { name: 'Bannerghatta National Park', lat: 12.8013, lng: 77.5750 },
+                { name: 'UB City', lat: 12.9722, lng: 77.5982 },
+                { name: 'Bull Temple', lat: 12.9429, lng: 77.5684 },
+                { name: 'ISKCON Temple Bangalore', lat: 13.0067, lng: 77.5513 },
+                { name: 'Tipu Sultan\'s Summer Palace', lat: 12.9592, lng: 77.5741 },
+                { name: 'Vidhana Soudha', lat: 12.9790, lng: 77.5913 },
+                { name: 'Commercial Street', lat: 12.9774, lng: 77.6094 },
+                { name: 'HAL Aerospace Museum', lat: 12.9598, lng: 77.6625 },
+                { name: 'Wonderla Amusement Park', lat: 12.8344, lng: 77.4005 },
+                { name: 'Art of Living International Center', lat: 12.8361, lng: 77.5309 },
+                { name: 'Phoenix Marketcity', lat: 12.9972, lng: 77.6974 },
+                { name: 'Visvesvaraya Industrial & Technological Museum', lat: 12.9731, lng: 77.5925 },
+                { name: 'Devanahalli Fort', lat: 13.2505, lng: 77.7145 },
+                { name: 'Orion Mall', lat: 13.0084, lng: 77.5552 },
+                { name: 'Bangalore Fort', lat: 12.9649, lng: 77.5818 },
+                { name: 'Karnataka Chitrakala Parishath', lat: 12.9818, lng: 77.5794 },
+                { name: 'St. Mary\'s Basilica', lat: 12.9866, lng: 77.6087 },
+                { name: 'National Gallery of Modern Art', lat: 12.9850, lng: 77.5855 },
+                { name: 'Janapada Loka', lat: 12.8373, lng: 77.2915 },
+                { name: 'Bangalore Aquarium', lat: 12.9760, lng: 77.5908 },
+                { name: 'Snow City', lat: 13.0069, lng: 77.5663 },
+                { name: 'Gavi Gangadhareshwara Temple', lat: 12.9525, lng: 77.5553 },
+                { name: 'Innovative Film City', lat: 12.8354, lng: 77.4048 }
+            ]
+        },
+        'Delhi': { 
+            center: [28.7041, 77.1025], 
+            locations: [
+                { name: 'India Gate', lat: 28.6129, lng: 77.2295 },
+                { name: 'Qutub Minar', lat: 28.5244, lng: 77.1855 },
+                { name: 'Red Fort', lat: 28.6562, lng: 77.2410 },
+                { name: 'Humayun\'s Tomb', lat: 28.5933, lng: 77.2507 },
+                { name: 'Lotus Temple', lat: 28.5535, lng: 77.2588 },
+                { name: 'Akshardham Temple', lat: 28.5613, lng: 77.2766 },
+                { name: 'Jama Masjid', lat: 28.6507, lng: 77.2334 },
+                { name: 'Rashtrapati Bhavan', lat: 28.6143, lng: 77.1995 },
+                { name: 'Jantar Mantar', lat: 28.6277, lng: 77.2166 },
+                { name: 'Gurudwara Bangla Sahib', lat: 28.6263, lng: 77.2089 },
+                { name: 'Chandni Chowk', lat: 28.6562, lng: 77.2307 },
+                { name: 'Hauz Khas Village', lat: 28.5517, lng: 77.1947 },
+                { name: 'Lodhi Garden', lat: 28.5919, lng: 77.2195 },
+                { name: 'Dilli Haat', lat: 28.5714, lng: 77.2082 },
+                { name: 'Sarojini Nagar Market', lat: 28.5768, lng: 77.1903 },
+                { name: 'Connaught Place', lat: 28.6318, lng: 77.2188 },
+                { name: 'Raj Ghat', lat: 28.6406, lng: 77.2483 },
+                { name: 'Purana Qila', lat: 28.6083, lng: 77.2372 },
+                { name: 'Agrasen ki Baoli', lat: 28.6264, lng: 77.2255 },
+                { name: 'National Rail Museum', lat: 28.5830, lng: 77.1824 },
+                { name: 'National Museum', lat: 28.6111, lng: 77.2194 },
+                { name: 'Tughlaqabad Fort', lat: 28.5135, lng: 77.2605 },
+                { name: 'Mehrauli Archaeological Park', lat: 28.5204, lng: 77.1856 },
+                { name: 'Garden of Five Senses', lat: 28.5222, lng: 77.2062 },
+                { name: 'Kingdom of Dreams', lat: 28.4608, lng: 77.0694 },
+                { name: 'Nehru Planetarium', lat: 28.6083, lng: 77.2057 },
+                { name: 'Chhatarpur Temple', lat: 28.5080, lng: 77.1724 }
+            ]
+        },
+        'Hyderabad': { 
+            center: [17.3850, 78.4867], 
+            locations: [
+                { name: 'Charminar', lat: 17.3616, lng: 78.4747 },
+                { name: 'Golconda Fort', lat: 17.3888, lng: 78.4063 },
+                { name: 'Hussain Sagar Lake', lat: 17.4267, lng: 78.4784 },
+                { name: 'Ramoji Film City', lat: 17.2514, lng: 78.6791 },
+                { name: 'Salar Jung Museum', lat: 17.3614, lng: 78.4764 },
+                { name: 'Chowmahalla Palace', lat: 17.3551, lng: 78.4728 },
+                { name: 'Falaknuma Palace', lat: 17.3402, lng: 78.4552 },
+                { name: 'Qutb Shahi Tombs', lat: 17.4069, lng: 78.4042 },
+                { name: 'Birla Mandir', lat: 17.4062, lng: 78.4688 },
+                { name: 'Mecca Masjid', lat: 17.3601, lng: 78.4727 },
+                { name: 'Paigah Tombs', lat: 17.3300, lng: 78.4900 },
+                { name: 'Nehru Zoological Park', lat: 17.3516, lng: 78.4566 },
+                { name: 'Purani Haveli', lat: 17.3621, lng: 78.4820 },
+                { name: 'Lakshmi Narasimha Temple', lat: 17.4206, lng: 78.3686 },
+                { name: 'Jala Vihar', lat: 17.4410, lng: 78.4716 },
+                { name: 'Snow World', lat: 17.4116, lng: 78.4842 },
+                { name: 'Lumbini Park', lat: 17.4079, lng: 78.4735 },
+                { name: 'Laad Bazaar', lat: 17.3615, lng: 78.4754 },
+                { name: 'Durgam Cheruvu', lat: 17.4437, lng: 78.3846 },
+                { name: 'Sudha Car Museum', lat: 17.3540, lng: 78.4827 },
+                { name: 'Inorbit Mall', lat: 17.4363, lng: 78.3891 },
+                { name: 'Hyderabad Botanical Gardens', lat: 17.4646, lng: 78.3741 },
+                { name: 'Kasu Brahmananda Reddy National Park', lat: 17.4287, lng: 78.4485 },
+                { name: 'Tank Bund', lat: 17.4124, lng: 78.4746 },
+                { name: 'Golconda Fort Mosque', lat: 17.3910, lng: 78.4039 },
+                { name: 'Toli Masjid', lat: 17.3900, lng: 78.4036 },
+                { name: 'Shah Ghouse Hotel', lat: 17.3639, lng: 78.4712 }
+            ]
+        },
+        'Kerala': { 
+            center: [10.8505, 76.2711], 
+            locations: [
+                { name: 'Fort Kochi', lat: 9.9678, lng: 76.2415 },
+                { name: 'Athirappilly Water Falls', lat: 10.2952, lng: 76.5654 },
+                { name: 'Munnar Tea Gardens', lat: 10.0889, lng: 77.0595 },
+                { name: 'Alleppey Backwaters', lat: 9.4981, lng: 76.3388 },
+                { name: 'Periyar National Park', lat: 9.4674, lng: 77.1654 },
+                { name: 'Kovalam Beach', lat: 8.4024, lng: 76.9790 },
+                { name: 'Varkala Beach', lat: 8.7360, lng: 76.7196 },
+                { name: 'Wayanad Wildlife Sanctuary', lat: 11.7584, lng: 76.2081 },
+                { name: 'Jatayu Earth\'s Center', lat: 8.8687, lng: 76.8406 },
+                { name: 'Bekal Fort', lat: 12.3920, lng: 75.0298 },
+                { name: 'Kuttanad', lat: 9.4975, lng: 76.3267 },
+                { name: 'Pookode Lake', lat: 11.5300, lng: 76.0100 },
+                { name: 'Mattancherry Palace', lat: 9.9592, lng: 76.2625 },
+                { name: 'Cherai Beach', lat: 10.1656, lng: 76.1772 },
+                { name: 'Ponnani', lat: 10.7816, lng: 75.9238 },
+                { name: 'Kumarakom Bird Sanctuary', lat: 9.6100, lng: 76.4300 },
+                { name: 'Eravikulam National Park', lat: 10.1557, lng: 77.0396 },
+                { name: 'Padmanabhaswamy Temple', lat: 8.4842, lng: 76.9458 },
+                { name: 'Poonjar Palace', lat: 9.7719, lng: 76.7867 },
+                { name: 'Valiyathura Pier', lat: 8.4700, lng: 76.9380 },
+                { name: 'Light House Beach', lat: 8.4000, lng: 76.9790 },
+                { name: 'Vazhachal Falls', lat: 10.2880, lng: 76.5610 },
+                { name: 'Alappuzha Lighthouse', lat: 9.4965, lng: 76.3241 },
+                { name: 'Ashtamudi Lake', lat: 8.9734, lng: 76.6265 },
+                { name: 'Kottayam', lat: 9.5919, lng: 76.5268 },
+                { name: 'Kumarakom', lat: 9.6100, lng: 76.4300 },
+                { name: 'Thiruvananthapuram Zoo', lat: 8.5135, lng: 76.9536 }
+            ]
+        }
     };
     
-    // Generate 27 random locations for each city
-    function generateRandomLocations(cityName) {
-        const { center } = vendingMachines[cityName];
-        const locations = [];
-        for (let i = 1; i <= 27; i++) {
-            // Generate larger random offsets for a wider spread
-            const latOffset = (Math.random() - 0.5) * 1.0; // +/- 0.5 degrees
-            const lngOffset = (Math.random() - 0.5) * 1.0; // +/- 0.5 degrees
-            locations.push({
-                name: `${cityName} Vending Machine #${i}`,
-                lat: center[0] + latOffset,
-                lng: center[1] + lngOffset
-            });
-        }
-        vendingMachines[cityName].locations = locations;
-    }
-
-    // Initialize all locations
-    Object.keys(vendingMachines).forEach(city => generateRandomLocations(city));
-
     // Function to show a specific page and hide others
     function showPage(pageId) {
         pages.forEach(page => {
